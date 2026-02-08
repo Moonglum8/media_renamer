@@ -30,18 +30,28 @@ def tmdb_api_movie_search(query_str: str) -> dict:
     response = requests.get(base_url + query, headers=headers)
     return response.json()
 
+
 def make_new_namesList(file_names: typing.List[tuple]) -> typing.List[tuple[str, str]]:
     new_names: typing.List[tuple[str, str]] = []
     for name, ext in file_names:
         old_name: str = f"{name}.{ext}"
+        new_name: str = old_name
         tmdb_obj = tmdb_api_movie_search(name)
         if tmdb_obj["results"]:
             try:
                 new_name: str = f"{tmdb_obj['results'][0]['title']} ({tmdb_obj['results'][0]['release_date'][:4]}) [tmdbid-{tmdb_obj['results'][0]['id']}].{ext}"
             except (KeyError, IndexError):
-                new_name: str = f"{name}.{ext}" 
+                pass 
         new_names.append((old_name, new_name))     
     return new_names
+
+
+def rename_files(folder: str, new_names: typing.List[tuple[str, str]]) -> None:
+    for old_name, new_name in new_names:
+        old_path = os.path.join(folder, old_name)
+        new_path = os.path.join(folder, new_name)
+        os.rename(old_path, new_path)
+
 
 if __name__ == "__main__":
     pprint(sys.argv)
@@ -52,7 +62,7 @@ if __name__ == "__main__":
     folder_path = sys.argv[1]
     extension = sys.argv[2] if len(sys.argv) > 2 else "mkv"
     file_names = get_file_names(folder_path, extension)
-    pprint(file_names)
+    # pprint(file_names)
 
     new_names = make_new_namesList(file_names)
     pprint(new_names)
